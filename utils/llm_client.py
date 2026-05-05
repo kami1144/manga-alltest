@@ -29,7 +29,7 @@ class LLMProvider(Enum):
 DEFAULT_PROVIDER = LLMProvider.MINIMAX_CLI  # mmx CLI doesn't need API key
 DEFAULT_MODEL = "MiniMax-M2"
 
-MINIMAX_API_URL = "https://api.minimax.io/v1/chat/completions"
+MINIMAX_API_URL = "https://api.minimax.chat/v1/text/chatcompletion_v2"
 OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
 OLLAMA_API_URL = "http://localhost:11434/api/chat"
 
