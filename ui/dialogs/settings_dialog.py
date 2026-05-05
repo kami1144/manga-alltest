@@ -5,9 +5,9 @@ Settings dialog with tabs for General, Page Settings, and Export options.
 import logging
 from typing import Any, Dict, Optional
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import (
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import (
     QDialog,
     QVBoxLayout,
     QHBoxLayout,

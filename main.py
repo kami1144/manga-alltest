@@ -10,9 +10,9 @@ import logging
 from pathlib import Path
 from typing import Any, Dict
 
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
 
 # Configure logging
 logging.basicConfig(
@@ -87,10 +87,8 @@ def save_settings(settings: Dict[str, Any]) -> None:
 
 
 def setup_high_dpi() -> None:
-    """Enable high DPI support."""
-    QApplication.setHighDpiScaleFactorRoundingPolicy(
-        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
-    )
+    """Enable high DPI support for PyQt5."""
+    # Set environment variables BEFORE creating QApplication
     os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
     os.environ["QT_SCALE_FACTOR_ROUNDING_POLICY"] = "PassThrough"
 
@@ -100,11 +98,16 @@ def main() -> int:
     setup_directories()
     settings = setup_environment()
 
-    # Apply high DPI settings
+    # Apply high DPI settings BEFORE creating QApplication
     setup_high_dpi()
 
     # Create application
     app = QApplication(sys.argv)
+
+    # PyQt5 uses AA_EnableHighDpiScaling and AA_UseHighDpiPixmaps attributes AFTER app creation
+    app.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    app.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+
     app.setApplicationName("MangaAutoLayout")
     app.setApplicationVersion("1.0.0")
     app.setOrganizationName("MangaAutoLayout")

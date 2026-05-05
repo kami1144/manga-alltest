@@ -7,9 +7,10 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QKeySequence
-from PyQt6.QtWidgets import (
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QKeySequence
+from PyQt5.QtWidgets import QAction
+from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
     QWidget,
@@ -101,10 +102,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("MangaAutoLayout - 漫画排版工具")
         self.setMinimumSize(1200, 800)
 
-        # Apply high DPI scaling
-        QApplication.setHighDpiScaleFactorRoundingPolicy(
-            Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
-        )
+        # Apply high DPI scaling (for PyQt5 compatibility, handled in main.py)
+# QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+# QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
         # Create central widget with horizontal layout
         central_widget = QWidget()

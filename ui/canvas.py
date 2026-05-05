@@ -6,12 +6,12 @@ Uses PyQt6 QGraphicsView and QGraphicsScene.
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-from PyQt6.QtCore import Qt, QRectF, QPointF, pyqtSignal
-from PyQt6.QtGui import (
+from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal
+from PyQt5.QtGui import (
     QPen, QBrush, QColor, QPainter, QPixmap, QFont,
     QFontMetrics, QTransform, QPolygonF
 )
-from PyQt6.QtWidgets import (
+from PyQt5.QtWidgets import (
     QGraphicsView, QGraphicsScene, QGraphicsItem,
     QGraphicsRectItem, QGraphicsPixmapItem, QGraphicsTextItem,
     QGraphicsPolygonItem,
@@ -147,7 +147,7 @@ class DialogueBubbleItem(QGraphicsRectItem):
 
         # Set appearance based on type
         if self.bubble_type == 'whisper':
-            self.setPen(QPen(QColor(150, 150, 150), 1, Qt.PenStyle.DashLine))
+            self.setPen(QPen(QColor(150, 150, 150), 1, Qt.DashLine))
             self.setBrush(QBrush(QColor(255, 255, 255, 200)))
         else:
             self.setPen(QPen(QColor(0, 0, 0), 2))
@@ -218,8 +218,8 @@ class MangaCanvas(QGraphicsView):
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.setBackgroundBrush(QColor(180, 180, 180))
 
         # Enable anti-aliasing
@@ -234,7 +234,7 @@ class MangaCanvas(QGraphicsView):
         self._page_height = height
         self._scene.setSceneRect(0, 0, width, height)
         self.resetTransform()
-        self.fitInView(self._scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
+        self.fitInView(self._scene.sceneRect(), Qt.KeepAspectRatio)
 
     def load_page(
         self,
@@ -358,7 +358,7 @@ class MangaCanvas(QGraphicsView):
     def _draw_page_background(self) -> None:
         """Draw white page background."""
         bg = QGraphicsRectItem(0, 0, self._page_width, self._page_height)
-        bg.setPen(QPen(Qt.PenStyle.NoPen))
+        bg.setPen(QPen(Qt.NoPen))
         bg.setBrush(QBrush(QColor(255, 255, 255)))
         self._scene.addItem(bg)
 
@@ -394,8 +394,8 @@ class MangaCanvas(QGraphicsView):
                 if not pixmap.isNull():
                     scaled_pixmap = pixmap.scaled(
                         w, h,
-                        Qt.AspectRatioMode.IgnoreAspectRatio,
-                        Qt.TransformationMode.SmoothTransformation
+                        Qt.IgnoreAspectRatio,
+                        Qt.SmoothTransformation
                     )
             except Exception as e:
                 logger.warning(f"Failed to load image {image_ref}: {e}")
@@ -456,7 +456,7 @@ class MangaCanvas(QGraphicsView):
         text_item.setDefaultTextColor(QColor(255, 255, 255))
         text_item.setPos(x + 5, y + h - int(h * 0.05) - 20)
         text_item.setTextWidth(w - 10)
-        text_item.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+        text_item.setTextInteractionFlags(Qt.NoTextInteraction)
 
     def _draw_reading_order(self, panels: List[Dict[str, Any]]) -> None:
         """Draw reading order numbers."""
@@ -503,7 +503,7 @@ class MangaCanvas(QGraphicsView):
         """Fit page in view."""
         self.resetTransform()
         rect = QRectF(0, 0, self._page_width, self._page_height)
-        self.fitInView(rect, Qt.AspectRatioMode.KeepAspectRatio)
+        self.fitInView(rect, Qt.KeepAspectRatio)
         self._zoom = 1.0
         self.zoomChanged.emit(self._zoom)
 
