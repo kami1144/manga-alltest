@@ -467,6 +467,7 @@ class MangaCanvas(QGraphicsView):
         y_ratio = panel.get('y_ratio', 0)
         w_ratio = panel.get('w_ratio', 1)
         h_ratio = panel.get('h_ratio', 1)
+        x_ratio = panel.get('x_ratio', 0)
         x = int(x_ratio * self._page_width)
         y = int(y_ratio * self._page_height)
         w = int(w_ratio * self._page_width)
