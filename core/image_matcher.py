@@ -246,7 +246,7 @@ class ImageMatcher:
             image_summaries = self._summarize_images_with_analyses(image_analyses)
             prompt = self._build_matching_prompt(scene_descs, image_summaries)
             logger.info(f"ImageMatcher: LLM deciding scene-image assignments...")
-            response = self._llm.complete(prompt, max_tokens=2048)
+            response = self._llm.complete(prompt, max_tokens=4096)
             logger.info(f"ImageMatcher: LLM response: {str(response)[:200] if response else 'None'}")
 
             # Parse LLM's assignment decisions
@@ -398,9 +398,9 @@ class ImageMatcher:
             "You are a manga artist matching scenes to reference images.\n\n"
             f"Scenes to match:\n{scenes_text}\n\n"
             f"Available images:\n{images_text}\n\n"
-            "For each scene, pick the best matching image (by scene description and emotional tone).\n"
-            "Output JSON only: [{\"scene_id\":\"s1\",\"image_ref\":\"path/to/img.jpg\",\"match_score\":0.9},...]\n"
-            "Score 0.0-1.0 for confidence. Unmatched scenes get score 0."
+            "Output JSON only, no explanation:\n"
+            "[{\"scene_id\":\"scene_2\",\"image_ref\":\"path/to/img.jpg\",\"match_score\":0.9},...]\n"
+            "Score 0.0-1.0. Unmatched scenes get score 0."
         )
 
     def _parse_llm_assignments(

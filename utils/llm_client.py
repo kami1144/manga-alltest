@@ -342,7 +342,7 @@ class LLMClient:
         response = self.chat(
             user_prompt,
             system=system_prompt,
-            max_tokens=1024,
+            max_tokens=2048,
             temperature=0.3,
         )
         if response:
