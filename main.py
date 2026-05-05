@@ -86,27 +86,18 @@ def save_settings(settings: Dict[str, Any]) -> None:
     logger.info("Settings saved")
 
 
-def setup_high_dpi() -> None:
-    """Enable high DPI support for PyQt5."""
-    # Set environment variables BEFORE creating QApplication
-    os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
-    os.environ["QT_SCALE_FACTOR_ROUNDING_POLICY"] = "PassThrough"
-
-
 def main() -> int:
     """Main entry point."""
     setup_directories()
     settings = setup_environment()
 
-    # Apply high DPI settings BEFORE creating QApplication
-    setup_high_dpi()
+    # Apply high DPI settings via environment variables (must be set before QCoreApplication is created)
+    os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
+    os.environ["QT_USE_HIGH_DPI_PIXMAPS"] = "1"
+    os.environ["QT_SCALE_FACTOR_ROUNDING_POLICY"] = "PassThrough"
 
     # Create application
     app = QApplication(sys.argv)
-
-    # PyQt5 uses AA_EnableHighDpiScaling and AA_UseHighDpiPixmaps attributes AFTER app creation
-    app.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-    app.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
     app.setApplicationName("MangaAutoLayout")
     app.setApplicationVersion("1.0.0")
