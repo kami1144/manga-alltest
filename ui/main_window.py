@@ -65,6 +65,7 @@ class MainWindow(QMainWindow):
         self._current_page: int = 1
         self._total_pages: int = 0
         self._current_scene_id: Optional[str] = None
+        self._page_rhythms: List[str] = []  # Pacing analysis results for each page
 
         # Initialize AI modules
         # Read LLM config from settings
@@ -383,9 +384,21 @@ class MainWindow(QMainWindow):
             )
 
             # Step 1b: Narrative pacing analysis (geometric rhythm detection)
+            # This populates self._page_rhythms for re-layout
             self._analyze_narrative_pacing(reading_direction)
 
-            # Step 1c: Image-to-scene matching (saliency detection + assignment)
+            # Step 1c: Re-generate layout with rhythm awareness
+            # Pass page rhythms to template selection for rhythm-aware templates
+            if hasattr(self, '_page_rhythms') and self._page_rhythms:
+                self._layout_data = generate_layout(
+                    self._script_data,
+                    self._images,
+                    reading_direction,
+                    page_rhythms=self._page_rhythms
+                )
+                logger.info(f"[LAYOUT] Re-generated layout with rhythm awareness: {self._page_rhythms}")
+
+            # Step 1d: Image-to-scene matching (saliency detection + assignment)
             if self._images:
                 self._match_images_to_panels()
 
@@ -445,6 +458,7 @@ class MainWindow(QMainWindow):
 
     def _analyze_narrative_pacing(self, reading_direction: str) -> None:
         """Step 1b: Analyze narrative pacing for each page using geometric features."""
+        self._page_rhythms = []
         try:
             prev_rhythm = None
             page_size = (self._settings.get('page_width', 2480),
@@ -455,6 +469,7 @@ class MainWindow(QMainWindow):
                 panels = page.get('panels', [])
 
                 if not panels:
+                    self._page_rhythms.append('transition')
                     continue
 
                 # Convert ratio-based panel layout to bounds-based format for analyzer
@@ -481,6 +496,7 @@ class MainWindow(QMainWindow):
 
                 # Log per-page result
                 overall = result.get('overall_rhythm', 'transition')
+                self._page_rhythms.append(overall)
                 rhythm_label = {'climax': '🔴高潮', 'tension': '🟡紧张', 'transition': '🟢过渡', 'calm': '🔵平静'}.get(overall, overall)
                 logger.info(f"[PACING] page {page_index + 1}: {rhythm_label}")
 

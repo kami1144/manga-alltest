@@ -68,6 +68,7 @@ def generate_layout(
     gutter_width: int = DEFAULT_GUTTER,
     page_width: int = 2480,
     page_height: int = 3508,
+    page_rhythms: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
     Generate automatic layout for manga pages.
@@ -82,6 +83,8 @@ def generate_layout(
         gutter_width: Pixel width of gutters between panels
         page_width: Page width in pixels
         page_height: Page height in pixels
+        page_rhythms: List of narrative rhythms (calm/tension/transition/climax)
+            one per page, from pacing analysis. If None, uses urgency only.
 
     Returns:
         Layout data with pages and panels
@@ -95,6 +98,11 @@ def generate_layout(
         scene_count = len(scenes)
         narrative = page.get('narrative', {})
         layout_hints = page.get('layout_hints', {})
+
+        # Get rhythm for this page from pacing analysis
+        page_rhythm = None
+        if page_rhythms and page_idx < len(page_rhythms):
+            page_rhythm = page_rhythms[page_idx]
 
         # Determine panel count: use narrative hints, not just scene count
         panel_count = _resolve_panel_count(
@@ -116,6 +124,7 @@ def generate_layout(
             urgency=urgency,
             prefer_grid=prefer_grid,
             allow_bleed=allow_bleed,
+            rhythm=page_rhythm,
         )
 
         try:
@@ -249,14 +258,55 @@ def _select_template_for_page(
     urgency: int,
     prefer_grid: bool,
     allow_bleed: bool,
+    rhythm: Optional[str] = None,
 ) -> str:
     """
     Select template based on page narrative profile.
-    Replaces simple scene-count mapping with smarter decisions.
+    Uses rhythm (calm/tension/transition/climax) to guide template selection.
+
+    Args:
+        panel_count: Number of panels on the page
+        page_type: Page type from script hints
+        urgency: Urgency level (1-10)
+        prefer_grid: Whether to prefer grid-based layout
+        allow_bleed: Whether to allow bleed panels
+        rhythm: Narrative rhythm from pacing analysis
+
+    Returns:
+        Template name
     """
     if panel_count == 1:
         return 'splash'
 
+    # Rhythm-aware selection: calm/transition → grid, tension/climax → dynamic
+    if rhythm in ('calm', 'transition'):
+        # Calm/transition: prefer grid-based layouts for steady pacing
+        if prefer_grid or panel_count <= 3:
+            if panel_count == 2:
+                return 'half_vertical'
+            if panel_count == 3:
+                return 'thirds'
+            return 'grid_4'
+        # Non-grid preference but calm rhythm: still use regular templates
+        if panel_count == 2:
+            return 'half_vertical'
+        if panel_count == 3:
+            return 'manga_classic'
+        return 'grid_4'
+
+    elif rhythm in ('tension', 'climax'):
+        # Tension/climax: prefer dynamic layouts for impact
+        if panel_count == 1:
+            return 'full_bleed'
+        if panel_count == 2:
+            return 'dynamic_diagonal'
+        if panel_count == 3:
+            return 'dynamic_diagonal'
+        if urgency >= 9:
+            return 'full_bleed'
+        return 'grid_4'
+
+    # Fallback: original urgency-based logic when no rhythm provided
     # Grid preference (calm/transition pages)
     if prefer_grid:
         if panel_count == 2:
