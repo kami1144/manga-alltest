@@ -246,7 +246,7 @@ class ImageMatcher:
             image_summaries = self._summarize_images_with_analyses(image_analyses)
             prompt = self._build_matching_prompt(scene_descs, image_summaries)
             logger.info(f"ImageMatcher: LLM deciding scene-image assignments...")
-            response = self._llm.complete(prompt)
+            response = self._llm.complete(prompt, max_tokens=2048)
             logger.info(f"ImageMatcher: LLM response: {str(response)[:200] if response else 'None'}")
 
             # Parse LLM's assignment decisions

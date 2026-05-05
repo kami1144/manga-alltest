@@ -158,7 +158,9 @@ class LLMClient:
         logger.info(f"MiniMax API response body: {resp.text[:500]}")
         if resp.status_code == 200:
             data = resp.json()
-            return data.get("choices", [{}])[0].get("message", {}).get("content")
+            msg = data.get("choices", [{}])[0].get("message", {})
+            # MiniMax puts content in reasoning_content for reasoning models
+            return msg.get("content") or msg.get("reasoning_content") or ""
         logger.error(f"MiniMax error {resp.status_code}: {resp.text[:200]}")
         return None
 
@@ -340,7 +342,7 @@ class LLMClient:
         response = self.chat(
             user_prompt,
             system=system_prompt,
-            max_tokens=512,
+            max_tokens=1024,
             temperature=0.3,
         )
         if response:
