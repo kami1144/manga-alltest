@@ -6,3 +6,6 @@ __pycache__/
 dist/
 build/
 *.egg
+
+# Logs
+.manga_auto_layout/logs/

@@ -14,10 +14,22 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 
-# Configure logging
+# Configure logging - both console and file
+LOG_DIR = Path.home() / ".manga_auto_layout" / "logs"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+file_handler = logging.FileHandler(LOG_DIR / "run.log", encoding="utf-8")
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+
+error_handler = logging.FileHandler(LOG_DIR / "error.log", encoding="utf-8")
+error_handler.setLevel(logging.ERROR)
+error_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(), file_handler, error_handler]
 )
 logger = logging.getLogger(__name__)
 
