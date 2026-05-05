@@ -1,0 +1,54 @@
+{
+  "name": "grid_6",
+  "description": "Six panels in a 3x2 grid",
+  "panels": [
+    {
+      "x_ratio": 0,
+      "y_ratio": 0,
+      "w_ratio": 0.333,
+      "h_ratio": 0.5,
+      "shape": "rect",
+      "bleed_edge": null
+    },
+    {
+      "x_ratio": 0.333,
+      "y_ratio": 0,
+      "w_ratio": 0.333,
+      "h_ratio": 0.5,
+      "shape": "rect",
+      "bleed_edge": null
+    },
+    {
+      "x_ratio": 0.666,
+      "y_ratio": 0,
+      "w_ratio": 0.334,
+      "h_ratio": 0.5,
+      "shape": "rect",
+      "bleed_edge": null
+    },
+    {
+      "x_ratio": 0,
+      "y_ratio": 0.5,
+      "w_ratio": 0.333,
+      "h_ratio": 0.5,
+      "shape": "rect",
+      "bleed_edge": null
+    },
+    {
+      "x_ratio": 0.333,
+      "y_ratio": 0.5,
+      "w_ratio": 0.333,
+      "h_ratio": 0.5,
+      "shape": "rect",
+      "bleed_edge": null
+    },
+    {
+      "x_ratio": 0.666,
+      "y_ratio": 0.5,
+      "w_ratio": 0.334,
+      "h_ratio": 0.5,
+      "shape": "rect",
+      "bleed_edge": null
+    }
+  ]
+}

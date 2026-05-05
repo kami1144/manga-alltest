@@ -1,0 +1,22 @@
+{
+  "name": "half_vertical",
+  "description": "Two panels split vertically (left/right)",
+  "panels": [
+    {
+      "x_ratio": 0,
+      "y_ratio": 0,
+      "w_ratio": 0.5,
+      "h_ratio": 1,
+      "shape": "rect",
+      "bleed_edge": null
+    },
+    {
+      "x_ratio": 0.5,
+      "y_ratio": 0,
+      "w_ratio": 0.5,
+      "h_ratio": 1,
+      "shape": "rect",
+      "bleed_edge": null
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "thirds",
+  "description": "Three panels - 2 small top, 1 large bottom (manga style)",
+  "panels": [
+    {
+      "x_ratio": 0,
+      "y_ratio": 0,
+      "w_ratio": 0.5,
+      "h_ratio": 0.5,
+      "shape": "rect",
+      "bleed_edge": null
+    },
+    {
+      "x_ratio": 0.5,
+      "y_ratio": 0,
+      "w_ratio": 0.5,
+      "h_ratio": 0.5,
+      "shape": "rect",
+      "bleed_edge": null
+    },
+    {
+      "x_ratio": 0,
+      "y_ratio": 0.5,
+      "w_ratio": 1,
+      "h_ratio": 0.5,
+      "shape": "rect",
+      "bleed_edge": null
+    }
+  ]
+}

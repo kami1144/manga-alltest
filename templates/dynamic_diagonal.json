@@ -1,0 +1,32 @@
+{
+  "name": "dynamic_diagonal",
+  "description": "Dynamic diagonal split - 3 panels with diagonal composition",
+  "panels": [
+    {
+      "x_ratio": 0,
+      "y_ratio": 0,
+      "w_ratio": 0.65,
+      "h_ratio": 0.55,
+      "shape": "slanted",
+      "slant_angle": 15,
+      "bleed_edge": null
+    },
+    {
+      "x_ratio": 0.6,
+      "y_ratio": 0,
+      "w_ratio": 0.4,
+      "h_ratio": 0.5,
+      "shape": "rect",
+      "bleed_edge": null
+    },
+    {
+      "x_ratio": 0,
+      "y_ratio": 0.55,
+      "w_ratio": 1,
+      "h_ratio": 0.45,
+      "shape": "slanted",
+      "slant_angle": -10,
+      "bleed_edge": null
+    }
+  ]
+}

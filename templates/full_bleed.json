@@ -1,0 +1,14 @@
+{
+  "name": "full_bleed",
+  "description": "Single full-page panel",
+  "panels": [
+    {
+      "x_ratio": 0,
+      "y_ratio": 0,
+      "w_ratio": 1,
+      "h_ratio": 1,
+      "shape": "rect",
+      "bleed_edge": null
+    }
+  ]
+}

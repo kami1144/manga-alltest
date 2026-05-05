@@ -1,0 +1,14 @@
+{
+  "name": "splash",
+  "description": "Full-bleed splash page with slight margin",
+  "panels": [
+    {
+      "x_ratio": 0.03,
+      "y_ratio": 0.03,
+      "w_ratio": 0.94,
+      "h_ratio": 0.94,
+      "shape": "rect",
+      "bleed_edge": null
+    }
+  ]
+}

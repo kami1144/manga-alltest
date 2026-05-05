@@ -1,0 +1,113 @@
+# 项目背景
+
+MangaStudio 漫画排版工具
+项目路径：/Users/jinyonghao/manga-auto-layout/
+Python 项目，模块化结构在 core/ 目录下
+
+现有核心模块：
+- core/parser.py：已有分镜解析
+- core/layout_engine.py：排版引擎
+- core/image_composer.py：图片合成
+- core/typesetting_engine.py：排版引擎
+- core/narrative_pacing.py：阅读节奏分析（刚完成）
+
+已有依赖：requests, PIL/Pillow, json, logging, pathlib
+
+# 本次任务
+
+在 core/ 下新建 shot_parser.py，实现漫画分镜语义解析功能。
+
+## 数据模型
+
+```json
+{
+  "title": "故事标题",
+  "pages": [
+    {
+      "page_number": 1,
+      "panels": [
+        {
+          "id": 1,
+          "action": "男主握住女主的手",
+          "expression": "女主脸红",
+          "camera": {
+            "type": "close-up",
+            "description": "特写两人手部"
+          },
+          "dialogue": [
+            {"speaker": "男主", "text": "今天有话想跟你说..."}
+          ],
+          "narration": null,
+          "sfx": ["心跳加速"],
+          "importance": "high",
+          "layout_hint": "left-heavy",
+          "bleed": false,
+          "tags": ["接吻", "浪漫"]
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Camera 类型体系（日漫专用）
+
+wide / medium / close-up / extreme-close-up / over-shoulder / dutch / high-angle / low-angle / birds-eye / profile / two-shot / spread
+
+## 核心类
+
+```python
+class ShotParser:
+    """漫画分镜语义解析器"""
+
+    def parse(self, script_text: str, title: str = "") -> dict:
+        """从剧本文本解析出分镜 JSON"""
+
+    def parse_page(self, page_text: str, page_number: int) -> dict:
+        """解析单个页面"""
+
+    def parse_panel(self, panel_text: str, panel_id: int) -> dict:
+        """解析单个分镜"""
+
+    def _detect_camera(self, text: str) -> dict:
+        """检测镜头类型"""
+
+    def _detect_importance(self, text: str) -> str:
+        """检测重要性"""
+
+    def _extract_dialogue(self, text: str) -> list:
+        """提取对话/旁白"""
+
+    def _detect_sfx(self, text: str) -> list:
+        """检测音效"""
+
+    def _detect_tags(self, text: str) -> list:
+        """检测标签"""
+```
+
+## 实现要求
+
+1. **输入格式**：支持纯文本剧本（自动识别 Page N / 改行分段）
+2. **Camera 检测**：基于关键词（"特写"/"close-up"/"広角"）+ 语义推断
+3. **Dialogue 提取**：基于 `人物名：「」` 或 `人物名："` 模式
+4. **SFX 提取**：基于括号或大写音效词（`「バシン」` / `(SLAM)`）
+5. **Importance**：高冲击关键词（"高潮"/"告白"/"接吻"/"流血"）+ 用户可覆盖
+6. **Layout hint**：基于 camera type 推断（wide → spread, close-up → centered）
+7. **中文优先**，但支持日中双语剧本
+
+## 验收标准
+
+1. `parse()` 输入标准漫画剧本文本，输出符合 schema 的 JSON
+2. Camera type 检测准确率 > 80%（关键词匹配）
+3. Dialogue 提取支持 `「」` 和 `"` 两种引号
+4. 独立可运行：python -m core.shot_parser 可测试
+5. 包含单元测试 tests/test_shot_parser.py
+
+# 约束
+
+- 输出文件：/Users/jinyonghao/manga-auto-layout/core/shot_parser.py
+- 测试文件：/Users/jinyonghao/manga-auto-layout/tests/test_shot_parser.py
+- 禁止 git 操作（只写文件）
+- 代码必须通过 py_compile
+- 不要修改其他模块文件
+- 中文注释，代码风格与 core/parser.py 一致
