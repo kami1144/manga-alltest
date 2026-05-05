@@ -4,7 +4,7 @@ Uses PyQt6 QGraphicsView and QGraphicsScene.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 from PyQt5.QtCore import Qt, QRectF, QPointF, pyqtSignal
 from PyQt5.QtGui import (
@@ -214,17 +214,25 @@ class MangaCanvas(QGraphicsView):
         self._page_width = 2480  # ~210mm at 300dpi
         self._page_height = 3508  # ~297mm at 300dpi
 
+        # Image cache to avoid reloading the same image on every paint
+        self._pixmap_cache: Dict[str, QPixmap] = {}
+
         # Set up view
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        # Optimized rendering: only repaint changed regions
+        self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.BoundingRectViewportUpdate)
         self.setBackgroundBrush(QColor(180, 180, 180))
+        self.setForegroundBrush(QBrush(QColor(180, 180, 180)))
 
-        # Enable anti-aliasing
+
+        # Enable anti-aliasing (only for final output)
         self.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        self.setRenderHint(QPainter.RenderHint.LosslessImageRendering)
 
         logger.info("Canvas initialized")
 
@@ -233,6 +241,7 @@ class MangaCanvas(QGraphicsView):
         self._page_width = width
         self._page_height = height
         self._scene.setSceneRect(0, 0, width, height)
+        self._pixmap_cache.clear()
         self.resetTransform()
         self.fitInView(self._scene.sceneRect(), Qt.KeepAspectRatio)
 
@@ -255,7 +264,7 @@ class MangaCanvas(QGraphicsView):
         self._total_pages = len(pages)
         page = pages[page_index]
 
-        # Clear scene
+        # Clear scene efficiently
         self._scene.clear()
 
         # Draw page background
@@ -367,8 +376,6 @@ class MangaCanvas(QGraphicsView):
         shape = panel.get('shape', 'rect')
         bleed_edge = panel.get('bleed_edge')
         slant_angle = panel.get('slant_angle', 0)
-        logger.info(f"[CANVAS DRAW] panel_id={panel.get('id')} shape={shape} bleed={bleed_edge} slant={slant_angle}")
-
         x_ratio = panel.get('x_ratio', 0)
         y_ratio = panel.get('y_ratio', 0)
         w_ratio = panel.get('w_ratio', 1)
@@ -381,24 +388,28 @@ class MangaCanvas(QGraphicsView):
         w = max(w, 10)
         h = max(h, 10)
 
-        shape = panel.get('shape', 'rect')
-        bleed_edge = panel.get('bleed_edge')
-        slant_angle = panel.get('slant_angle', 0)
-
-        # Try to load image
+        # Try to load image (with cache)
         scaled_pixmap = None
         image_ref = panel.get('image_ref')
         if image_ref:
-            try:
-                pixmap = QPixmap(image_ref)
-                if not pixmap.isNull():
-                    scaled_pixmap = pixmap.scaled(
-                        w, h,
-                        Qt.IgnoreAspectRatio,
-                        Qt.SmoothTransformation
-                    )
-            except Exception as e:
-                logger.warning(f"Failed to load image {image_ref}: {e}")
+            # Check cache first
+            cache_key = f"{image_ref}:{w}x{h}"
+            if cache_key in self._pixmap_cache:
+                scaled_pixmap = self._pixmap_cache[cache_key]
+            else:
+                try:
+                    pixmap = QPixmap(image_ref)
+                    if not pixmap.isNull():
+                        scaled_pixmap = pixmap.scaled(
+                            w, h,
+                            Qt.IgnoreAspectRatio,
+                            Qt.SmoothTransformation
+                        )
+                        # Cache the scaled result
+                        if len(self._pixmap_cache) < 200:
+                            self._pixmap_cache[cache_key] = scaled_pixmap
+                except Exception as e:
+                    logger.warning(f"Failed to load image {image_ref}: {e}")
 
         # --- Slanted panels (parallelogram) ---
         if shape == 'slanted':
@@ -441,14 +452,10 @@ class MangaCanvas(QGraphicsView):
         if not description:
             return
 
-        x_ratio = panel.get('x_ratio', 0)
-        y_ratio = panel.get('y_ratio', 0)
-        w_ratio = panel.get('w_ratio', 1)
-        h_ratio = panel.get('h_ratio', 1)
-        x = int(x_ratio * self._page_width)
-        y = int(y_ratio * self._page_height)
-        w = int(w_ratio * self._page_width)
-        h = int(h_ratio * self._page_height)
+        x = int(panel.get('x_ratio', 0) * self._page_width)
+        y = int(panel.get('y_ratio', 0) * self._page_height)
+        w = int(panel.get('w_ratio', 1) * self._page_width)
+        h = int(panel.get('h_ratio', 1) * self._page_height)
 
         display_text = description[:80] + ('...' if len(description) > 80 else '')
         text_item = QGraphicsTextItem(display_text, parent_item)
@@ -457,6 +464,13 @@ class MangaCanvas(QGraphicsView):
         text_item.setPos(x + 5, y + h - int(h * 0.05) - 20)
         text_item.setTextWidth(w - 10)
         text_item.setTextInteractionFlags(Qt.NoTextInteraction)
+        y_ratio = panel.get('y_ratio', 0)
+        w_ratio = panel.get('w_ratio', 1)
+        h_ratio = panel.get('h_ratio', 1)
+        x = int(x_ratio * self._page_width)
+        y = int(y_ratio * self._page_height)
+        w = int(w_ratio * self._page_width)
+        h = int(h_ratio * self._page_height)
 
     def _draw_reading_order(self, panels: List[Dict[str, Any]]) -> None:
         """Draw reading order numbers."""

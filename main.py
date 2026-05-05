@@ -3,16 +3,19 @@ MangaAutoLayout - Automatic manga/comic page layout application.
 Entry point for PyQt6 desktop application.
 """
 
-import sys
 import os
+os.environ.setdefault("QT_ENABLE_HIGHDPI_SCALING", "1")
+os.environ.setdefault("QT_USE_HIGH_DPI_PIXMAPS", "1")
+
+import sys
 import json
 import logging
 from pathlib import Path
 from typing import Any, Dict
 
-from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QApplication
 
 # Configure logging - both console and file
 LOG_DIR = Path.home() / ".manga_auto_layout" / "logs"
@@ -102,11 +105,6 @@ def main() -> int:
     """Main entry point."""
     setup_directories()
     settings = setup_environment()
-
-    # Apply high DPI settings via environment variables (must be set before QCoreApplication is created)
-    os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
-    os.environ["QT_USE_HIGH_DPI_PIXMAPS"] = "1"
-    os.environ["QT_SCALE_FACTOR_ROUNDING_POLICY"] = "PassThrough"
 
     # Create application
     app = QApplication(sys.argv)

@@ -35,20 +35,23 @@ def load_images_from_folder(folder_path: str) -> List[Dict[str, Any]]:
     images: List[Dict[str, Any]] = []
     for file_path in sorted(folder.iterdir()):
         if file_path.suffix.lower() in SUPPORTED_FORMATS:
-            with Image.open(file_path) as img:
-                try:
-                    img.load()  # Force load to check for corruption
+            try:
+                with Image.open(file_path) as img:
+                    # HEIF/HEIC need explicit load() to decode, others lazy-load is fine
+                    if img.format in ('HEIF', 'HEIC'):
+                        img.load()
+                    # Copy only the info, not full decode — reuse PIL's lazy buffer
                     images.append({
                         'path': str(file_path),
                         'filename': file_path.name,
-                        'pil_image': img.copy(),  # Copy to avoid keeping file handle
+                        'pil_image': img.copy(),
                         'width': img.width,
                         'height': img.height,
                         'format': img.format,
                         'mode': img.mode,
                     })
-                except Exception as e:
-                    logger.warning(f"Failed to load image {file_path}: {e}")
+            except Exception as e:
+                logger.warning(f"Failed to load image {file_path}: {e}")
 
     if not images:
         raise ValueError(f"No valid images found in {folder_path}")
@@ -72,7 +75,8 @@ def load_image(file_path: str) -> Dict[str, Any]:
         raise FileNotFoundError(f"Image not found: {file_path}")
 
     img = Image.open(path)
-    img.load()
+    if img.format in ('HEIF', 'HEIC'):
+        img.load()
 
     return {
         'path': str(path),

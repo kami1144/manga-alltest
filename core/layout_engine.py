@@ -39,6 +39,131 @@ SHAPE_BLEED_ALL = 'bleed_all'
 SHAPE_SLANTED = 'slanted'  # diagonal割付
 
 
+# =============================================================================
+# Ability 4: Layout Scoring — shot_type × emotional_tone → fit_mode + panel size
+# =============================================================================
+
+# shot 越大 → 越需要大面板来展示细节
+SHOT_SIZE_WEIGHT = {
+    "close_up":    1.5,
+    "two_shot":    1.3,
+    "medium_shot": 1.0,
+    "wide_shot":   0.7,
+}
+
+# 情感越强 → 越需要大面板来传达情绪
+TONE_PRIORITY_WEIGHT = {
+    "romantic":   1.3,
+    "tense":      1.2,
+    "calm":       1.0,
+    "melancholy": 0.9,
+}
+
+# fit_mode 映射：人物特写填满，场景留白
+SHOT_FIT_MODE = {
+    "close_up":    "cover",    # 特写：填满裁剪
+    "two_shot":    "cover",    # 双人：填满裁剪
+    "medium_shot": "cover",    # 中景：填满裁剪
+    "wide_shot":   "contain",  # 全景：居中留白
+}
+
+
+def get_shot_type_from_camera(camera_type: str) -> str:
+    """从 camera type 字符串推断 shot_type"""
+    ct = (camera_type or "").lower().replace("-", "").replace(" ", "")
+    if "close" in ct:
+        return "close_up"
+    elif "two" in ct or "twoshot" in ct:
+        return "two_shot"
+    elif "wide" in ct or "full" in ct or "bird" in ct or "panoramic" in ct:
+        return "wide_shot"
+    return "medium_shot"
+
+
+def infer_emotional_tone(tags: list = None, importance: str = "medium") -> str:
+    """从 tags + importance 推断 emotional_tone"""
+    tags_lower = [t.lower() for t in (tags or [])]
+    if any(t in tags_lower for t in ["romantic", "love", "kiss", "intimate", "温柔", "浪漫"]):
+        return "romantic"
+    if any(t in tags_lower for t in ["tense", "action", "dramatic", "紧张", "高潮", "high impact"]):
+        return "tense"
+    if any(t in tags_lower for t in ["melancholy", "sad", "cry", "lonely", "悲伤", "寂寞"]):
+        return "melancholy"
+    return "calm"
+
+
+def score_scene_for_layout(shot_type: str, emotional_tone: str) -> float:
+    """计算 scene 的 layout_score，用于分配面板大小: score = SHOT × TONE"""
+    size_w = SHOT_SIZE_WEIGHT.get(shot_type, 1.0)
+    tone_w = TONE_PRIORITY_WEIGHT.get(emotional_tone, 1.0)
+    return size_w * tone_w
+
+
+def get_fit_mode(shot_type: str) -> str:
+    """获取 fit_mode"""
+    return SHOT_FIT_MODE.get(shot_type, "cover")
+
+
+def assign_scenes_with_scoring(
+    scenes: list,
+    template_panels: list,
+) -> List[Dict[str, Any]]:
+    """
+    能力4核心: 按 score 降序分配 scenes 到 panels（分数高的 → 大面板）。
+    返回带 fit_mode 和 score 的 panel 列表。
+    """
+    if not scenes or not template_panels:
+        return template_panels
+
+    # 解析每个 scene 的 shot_type 和 emotional_tone
+    shot_types = []
+    tones = []
+    for scene in scenes:
+        camera = scene.get('camera', scene.get('camera_type', 'medium'))
+        tags = scene.get('tags', [])
+        importance = scene.get('importance', 'medium')
+        shot_types.append(get_shot_type_from_camera(camera))
+        tones.append(infer_emotional_tone(tags, importance))
+
+    # 计算每个 scene 的 score
+    scored = []
+    for i, scene in enumerate(scenes):
+        st = shot_types[i]
+        tn = tones[i]
+        sc = score_scene_for_layout(st, tn)
+        fit = get_fit_mode(st)
+        scored.append((scene, sc, fit))
+
+    # 按 score 降序
+    scored.sort(key=lambda x: x[1], reverse=True)
+
+    # 按面板面积降序
+    sorted_panels = sorted(
+        template_panels,
+        key=lambda p: (p.get('w_ratio', 1) * p.get('h_ratio', 1)),
+        reverse=True
+    )
+
+    # 分配：高分 scene → 大面板
+    result = []
+    for panel, (scene, score, fit_mode) in zip(sorted_panels, scored):
+        panel_copy = dict(panel)
+        panel_copy['scene'] = scene
+        panel_copy['score'] = score
+        panel_copy['fit_mode'] = fit_mode
+        result.append(panel_copy)
+
+    # 剩余面板补齐（如果 scene < panel）
+    for panel in sorted_panels[len(scored):]:
+        panel_copy = dict(panel)
+        panel_copy['scene'] = None
+        panel_copy['score'] = 0
+        panel_copy['fit_mode'] = 'cover'
+        result.append(panel_copy)
+
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Template loading
 # ---------------------------------------------------------------------------
@@ -135,10 +260,15 @@ def generate_layout(
 
         template_panels = template.get('panels', [])
 
-        # Assign scenes to panels
+        # Assign scenes to panels using Ability 4 scoring (分数高的 → 大面板)
+        scored_panels = assign_scenes_with_scoring(
+            scenes=scenes[:panel_count],
+            template_panels=template_panels
+        )
+
         panels = []
-        for scene_idx, scene in enumerate(scenes[:panel_count]):
-            t_panel = template_panels[scene_idx] if scene_idx < len(template_panels) else {}
+        for scene_idx, t_panel in enumerate(scored_panels):
+            scene = t_panel.get('scene') or scenes[scene_idx] if scene_idx < len(scenes) else {}
 
             # Get image for this scene
             pil_image = None
@@ -171,6 +301,8 @@ def generate_layout(
                 'scene': scene,
                 'importance': scene.get('importance', 'low'),
                 'shot_type': scene.get('shot_type', 'medium_shot'),
+                'fit_mode': t_panel.get('fit_mode', 'cover'),   # Ability 4
+                'layout_score': t_panel.get('score', 0),          # Ability 4
             }
             panels.append(panel)
 

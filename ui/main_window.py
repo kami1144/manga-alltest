@@ -363,6 +363,49 @@ class MainWindow(QMainWindow):
             )
             logger.error(f"Failed to import images: {e}")
 
+
+    def _apply_ai_advice_parallel(self) -> None:
+        """Run AI advice for all scenes in parallel threads, non-blocking."""
+        import threading
+        from queue import Queue
+
+        all_scenes = []
+        for page in self._layout_data.get('pages', []):
+            for panel in page.get('panels', []):
+                scene = panel.get('scene', {})
+                if scene and scene.get('scene_id'):
+                    all_scenes.append((panel, scene))
+
+        if not all_scenes:
+            return
+
+        results_queue = Queue()
+        threads = []
+
+        def advise_worker(panel, scene, queue):
+            advice = self._ai_advisor.advise_scene(scene)
+            queue.put((panel, scene, advice))
+
+        for panel, scene in all_scenes:
+            t = threading.Thread(target=advise_worker, args=(panel, scene, results_queue))
+            t.start()
+            threads.append(t)
+
+        for t in threads:
+            t.join()
+
+        while not results_queue.empty():
+            panel, scene, advice = results_queue.get()
+            scene['layout_advice'] = advice
+            logger.info(
+                f"Scene {scene.get('scene_id')}: "
+                f"template={advice.get('template')}, "
+                f"tone={advice.get('emotional_tone')}, "
+                f"shot={advice.get('shot')}, "
+                f"source={advice.get('source')}"
+            )
+
+
     def _on_auto_layout(self) -> None:
         """Handle auto layout action - runs AI-powered Pipeline."""
         if not self._script_data:
@@ -412,20 +455,8 @@ class MainWindow(QMainWindow):
                     "正在使用 AI 辅助布局决策..."
                 )
 
-            # Apply AI advice to each panel's scene data
-            for page in self._layout_data.get('pages', []):
-                for panel in page.get('panels', []):
-                    scene = panel.get('scene', {})
-                    if scene:
-                        advice = self._ai_advisor.advise_scene(scene)
-                        scene['layout_advice'] = advice
-                        logger.info(
-                            f"Scene {scene.get('scene_id')}: "
-                            f"template={advice.get('template')}, "
-                            f"tone={advice.get('emotional_tone')}, "
-                            f"shot={advice.get('shot')}, "
-                            f"source={advice.get('source')}"
-                        )
+            # Apply AI advice to each panel (parallel LLM calls, non-blocking)
+            self._apply_ai_advice_parallel()
 
             # Step 3: Refine layout (gutter, bleed, reading flow)
             self._layout_data = self._refiner.refine_layout(
