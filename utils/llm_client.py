@@ -154,6 +154,8 @@ class LLMClient:
         resp = requests.post(
             self._api_url, headers=headers, json=payload, timeout=60
         )
+        logger.info(f"MiniMax API response status: {resp.status_code}")
+        logger.info(f"MiniMax API response body: {resp.text[:500]}")
         if resp.status_code == 200:
             data = resp.json()
             return data.get("choices", [{}])[0].get("message", {}).get("content")
@@ -230,6 +232,9 @@ class LLMClient:
             if system_prompt:
                 cmd.extend(["--system", system_prompt])
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            logger.info(f"mmx CLI returncode: {result.returncode}")
+            logger.info(f"mmx CLI stdout: {result.stdout[:300]}")
+            logger.info(f"mmx CLI stderr: {result.stderr[:200]}")
             if result.returncode == 0:
                 try:
                     data = json.loads(result.stdout)
